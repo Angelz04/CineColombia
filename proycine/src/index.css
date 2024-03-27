@@ -1,0 +1,9 @@
+/* index.css */
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+/* Agrega tus estilos personalizados debajo de las importaciones de Tailwind CSS */
+
+*{
+    overflow-x: hidden;
+}
