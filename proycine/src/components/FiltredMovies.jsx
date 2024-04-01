@@ -1,3 +1,4 @@
+import  { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import CardEndpoint from '../services/CardEndPoint';
 import Header from './Header';
@@ -6,26 +7,32 @@ const FilteredMovies = () => {
   const { genre } = useParams();
   const data = CardEndpoint();
 
-  // Normalizar el género de la URL para que coincida con los géneros de las películas
   const normalizedGenre = genre.toLowerCase();
 
-  // Filtrar las películas por género
   const filteredMovies = data.filter(movie => {
-    // Normalizar los géneros de la película para comparación
     const movieGenres = movie.Genre.toLowerCase().split(',').map(genre => genre.trim());
-    // Verificar si el género de la URL coincide con alguno de los géneros de la película
     return movieGenres.includes(normalizedGenre);
   });
 
+  // Definir y actualizar el estado para las propiedades requeridas
+  const [selectedCinema, setSelectedCinema] = useState('');
+  const [selectedDate, setSelectedDate] = useState('');
+
   return (
     <div>
-      <Header showFilters={true} />
+      <Header
+        showFilters={true}
+        selectedCinema={selectedCinema}
+        setSelectedCinema={setSelectedCinema}
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+      />
       <h2 className="text-2xl text-gray-500 text-start p-4 md:p-20">Películas de {genre}</h2>
       <div className="flex flex-wrap justify-center pb-4">
         {filteredMovies.length > 0 ? (
           filteredMovies.map((movie, index) => (
             <Link
-              to={`/details/${encodeURIComponent(movie.name)}`} // Enlaza cada tarjeta a la página de detalles
+              to={`/details/${encodeURIComponent(movie.name)}`}
               key={index}
               className="max-w-80 w-full md:w-1/2 lg:w-1/4 p-2 md:p-4"
             >
