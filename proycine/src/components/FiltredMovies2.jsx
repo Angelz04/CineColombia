@@ -1,25 +1,33 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import CardEndpoint from '../services/CardEndPoint';
-import PropTypes from 'prop-types';
+import Header2 from './Header2';
 
-const CardList = ({ isFiltersValid }) => {
+const FilteredMovies2 = () => {
+  const { genre } = useParams();
   const data = CardEndpoint();
-  const [linkEnabled, setLinkEnabled] = useState(false); // Estado para habilitar/deshabilitar el enlace
 
-  useEffect(() => {
-    // Habilitar el enlace si los filtros son válidos
-    setLinkEnabled(isFiltersValid);
-  }, [isFiltersValid]);
+  const normalizedGenre = genre.toLowerCase();
+
+  const filteredMovies = data.filter(movie => {
+    const movieGenres = movie.Genre.toLowerCase().split(',').map(genre => genre.trim());
+    return movieGenres.includes(normalizedGenre);
+  });
+
+
 
   return (
     <div>
-      <h2 className="text-2xl text-gray-500 text-start p-4 md:p-20">EN CARTELERA</h2>
+      <Header2
+      />
+      <h2 className="text-2xl text-gray-500 text-start p-4 md:p-20">Películas de {genre}</h2>
       <div className="flex flex-wrap justify-center pb-4">
-        {data.map((movie, index) => (
-          <div key={index} className="max-w-80 w-full md:w-1/2 lg:w-1/4 p-2 md:p-4">
-            {/* Agregar el atributo disabled al enlace cuando los filtros no son válidos */}
-            <Link to={`/details/${encodeURIComponent(movie.name)}`} className={`cursor-pointer ${!linkEnabled && 'pointer-events-none'}`}>
+        {filteredMovies.length > 0 ? (
+          filteredMovies.map((movie, index) => (
+            <Link
+              to={`/adminDetails/${encodeURIComponent(movie.name)}`}
+              key={index}
+              className="max-w-80 w-full md:w-1/2 lg:w-1/4 p-2 md:p-4"
+            >
               <div className="relative">
                 <img className="w-full h-auto object-cover opacity-100 pb-4" src={movie.img} alt={movie.name} />
               </div>
@@ -32,16 +40,13 @@ const CardList = ({ isFiltersValid }) => {
                 <div className="bg-gray-200 text-sm inline-block rounded-lg px-2 py-1 mb-1">{movie.Duration}</div>
               </div>
             </Link>
-          </div>
-        ))}
+          ))
+        ) : (
+          <p>No hay películas disponibles para el género {genre}.</p>
+        )}
       </div>
     </div>
   );
 };
 
-
-CardList.propTypes = {
-  isFiltersValid: PropTypes.bool.isRequired,
-};
-
-export default CardList;
+export default FilteredMovies2;

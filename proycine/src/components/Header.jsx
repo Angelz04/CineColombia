@@ -1,31 +1,53 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import PropTypes from 'prop-types'; // Importa PropTypes
+import  { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import LoginModal from './LoginModal'; // Importa el componente LoginModal
+import CinemasEndPoint from '../services/CinemasEndPoint';
 
-const Header = ({ showFilters }) => {
+const Header = ({ showFilters, setIsFiltersValid, selectedCinema, setSelectedCinema, selectedDate, setSelectedDate }) => {
   const [selectedGenre, setSelectedGenre] = useState(null);
-  const [selectedCinema, setSelectedCinema] = useState("");
-  const navigate = useNavigate();
-
-  const handleCinemaChange = (event) => {
-    setSelectedCinema(event.target.value);
-  };
-
-  const handleGenreFilter = (genre) => {
-    setSelectedGenre(genre);
-    navigate(`/movies/${genre}`);
-  };
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false); // Estado para controlar la visibilidad del modal de inicio de sesión
+  const cinemasData = CinemasEndPoint();
+  const { pathname } = useLocation();
 
   useEffect(() => {
     const savedCinema = localStorage.getItem("selectedCinema");
-    if (savedCinema) {
-      setSelectedCinema(savedCinema);
-    }
-  }, []);
+    const savedDate = localStorage.getItem("selectedDate");
+    if (savedCinema) setSelectedCinema(savedCinema);
+    if (savedDate) setSelectedDate(savedDate);
+  }, [setSelectedCinema, setSelectedDate]);
 
   useEffect(() => {
+    if (selectedCinema && selectedDate && setIsFiltersValid) {
+      setIsFiltersValid(true);
+    } else if (setIsFiltersValid) {
+      setIsFiltersValid(false);
+    }
+  }, [selectedCinema, selectedDate, setIsFiltersValid]);
+
+  const handleCinemaChange = event => {
+    const selectedCinema = event.target.value;
+    setSelectedCinema(selectedCinema);
+    setSelectedDate('');
     localStorage.setItem("selectedCinema", selectedCinema);
-  }, [selectedCinema]);
+  };
+  
+  const handleDateChange = event => {
+    const selectedDate = event.target.value;
+    setSelectedDate(selectedDate);
+    localStorage.setItem("selectedDate", selectedDate);
+  };
+
+  // Función para manejar el filtro por género
+  const handleGenreFilter = genre => {
+    setSelectedGenre(genre); // Actualizamos el género seleccionado
+    // Redirigimos al usuario a la página correspondiente
+    window.location.href = `/movies/${genre}`;
+  };
+
+  const cinemas = cinemasData ? Object.keys(cinemasData) : [];
+  const dates = selectedCinema && cinemasData[selectedCinema] ? Object.keys(cinemasData[selectedCinema]) : [];
+  const isHome = pathname === '/';
 
   return (
     <header className="bg-black text-white py-8 px-4 sm:px-8 flex flex-col sm:flex-row justify-between items-center fixed top-0 w-full z-10">
@@ -47,16 +69,17 @@ const Header = ({ showFilters }) => {
           <span className="block text-xs sm:text-sm mb-1">Cines cercanos</span>
           <div className="flex">
             <select
-              className="px-4 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 bg-black text-white text-xs sm:text-sm"
+              className={`px-4 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 bg-black text-white text-xs sm:text-sm ${!isHome ? 'pointer-events-none' : ''}`}
               value={selectedCinema}
               onChange={handleCinemaChange}
+              disabled={!isHome}
             >
               <option value="">Seleccione un cine</option>
-              <option value="Titan">Titan</option>
-              <option value="Unicentro">Unicentro</option>
-              <option value="Santa Fe">Santa Fe</option>
-              <option value="Americas">Americas</option>
-              <option value="Centro Mayor">Centro Mayor</option>
+              {cinemas.map(cinema => (
+                <option key={cinema} value={cinema}>
+                  {cinema}
+                </option>
+              ))}
             </select>
           </div>
         </div>
@@ -64,27 +87,42 @@ const Header = ({ showFilters }) => {
           <span className="block text-xs sm:text-sm mb-1">Fecha</span>
           <div className="flex">
             <select
-              className="px-4 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 bg-black text-white mr-2 sm:mr-4 text-xs sm:text-sm"
+              className={`px-4 py-1 border border-gray-300 rounded-md focus:outline-none focus:border-blue-500 bg-black text-white mr-2 sm:mr-4 text-xs sm:text-sm ${!isHome ? 'pointer-events-none' : ''}`}
+              value={selectedDate}
+              onChange={handleDateChange}
+              disabled={!isHome}
             >
               <option value="">Seleccione una fecha</option>
-              <option value="01 de Abril">01 de Abril</option>
-              <option value="02 de Abril">02 de Abril</option>
-              <option value="03 de Abril">03 de Abril</option>
-              <option value="04 de Abril">04 de Abril</option>
-              <option value="05 de Abril">05 de Abril</option>
+              {dates.map(date => (
+                <option key={date} value={date}>
+                  {date}
+                </option>
+              ))}
             </select>
           </div>
         </div>
-        <Link to="/perfil">
-          <img src="https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png" alt="Icono perfil" className="w-8 mt-4 sm:w-12  sm:mr-0 lg:mr-4"/>
-        </Link>
+
+        {/* Mostrar el componente LoginModal si el estado isLoginModalOpen es true */}
+        {isLoginModalOpen && <LoginModal onClose={() => setIsLoginModalOpen(false)} />}
+
+        {/* Mostrar el enlace solo si el modal de inicio de sesión no está abierto */}
+        {!isLoginModalOpen && (
+          <button onClick={() => setIsLoginModalOpen(true)}>
+            <img src="https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png" alt="Icono perfil" className="w-8 mt-4 sm:w-12  sm:mr-0 lg:mr-4"/>
+          </button>
+        )}
       </div>
     </header>
   );
 };
 
 Header.propTypes = {
-  showFilters: PropTypes.bool.isRequired, // Validación del prop showFilters
+  showFilters: PropTypes.bool.isRequired,
+  setIsFiltersValid: PropTypes.func,
+  selectedCinema: PropTypes.string.isRequired,
+  setSelectedCinema: PropTypes.func.isRequired,
+  selectedDate: PropTypes.string.isRequired,
+  setSelectedDate: PropTypes.func.isRequired,
 };
 
 export default Header;
